@@ -1,0 +1,9 @@
+*.pyc
+*.fits
+*.tbl
+ipython*
+output
+*.dat
+*.old
+*.csv
+*.json
