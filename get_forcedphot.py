@@ -12,36 +12,14 @@ from astropy.table import Table, Column, vstack, join
 import astropy.units as u
 from astropy.time import Time
 import glob
+import time
+import lsst.log
+from dax_utils import imgserv_json_to_df
+from stripe82phot import conv_afwtable_astropy, parse_phot_table
 
-def imgserv_json_to_df(json_input):
-    with open(json_input) as json_file:
-        json_data = json.load(json_file)
-
-    df = pd.DataFrame.from_dict(json_data['result']['table']['data'])
-    df.columns = [e['name'] 
-        for e in json_data['result']['table']['metadata']['elements']]
-    return(df)
-
-def parse_phot_table(table_path):
-    tab = Table.read(table_path)
-    tab['run'] = tab.meta['RUN']
-    tab['camcol'] = tab.meta['CAMCOL']
-    tab['field'] = tab.meta['FIELD']
-    tab['filterName'] = tab.meta['FILTER']
-    tab['psfMag'] = -2.5*np.log10(tab['base_PsfFlux_flux']/tab.meta['FLUXM0'])
-    tab['psfMagErr'] = -2.5*np.log10(tab['base_PsfFlux_fluxSigma']
-                                     /tab.meta['FLUXM0SG'])
-    tab['psfMag'].unit = u.mag
-    tab['psfMagErr'].unit = u.mag
-    del tab.meta['RUN']
-    del tab.meta['CAMCOL']
-    del tab.meta['FIELD']
-    del tab.meta['FILTER']
-    del tab.meta['FLUXM0']
-    del tab.meta['FLUXM0SG']
-    return(tab)
 
 def main():
+    lsst.log.debug('Start of main ,'+time.ctime())
     import argparse
     parser = argparse.ArgumentParser(description="""
             Run forced photometry on specified images and output a time-series table
@@ -80,14 +58,18 @@ def main():
         cfh.write('%s\n'%coord_str)
 
     # Run the forced photometry
+    lsst.log.debug('call forced phot ,'+time.ctime())
     exec_str = (('python forcedPhotExternalCatalog.py {} ' +
-            '--coord_file {} --dataset calexp --output {} --out_root {} ').format(
+            '--coord_file {} --dataset calexp --output {} --out_root {} --clobber-versions '
+            ).format(
             input_repo, coords_path, output_repo, os.path.join(dirpath, 'photometry')) + idstr)
     os.system(exec_str)
+    lsst.log.debug('returned from forced phot ,'+time.ctime())
 
     # Concatenate the input tables
     tnames = glob.glob(os.path.join(dirpath, 'photometry_*.fits'))
-    tbl_list = [parse_phot_table(name) for name in tnames]
+    tbl_list = [parse_phot_table(Table.read(name, hdu=1), convert=False) 
+                for name in tnames]
     alltabs = vstack(tbl_list)
 
     # merge
@@ -112,6 +94,7 @@ def main():
 
     # Clean up
     shutil.rmtree(dirpath)
+    lsst.log.debug('End of main ,'+time.ctime())
 
 if __name__ == '__main__':
     main()

@@ -9,7 +9,9 @@ import lsst.afw.geom as afwGeom
 import lsst.afw.table as afwTable
 import lsst.pipe.base as pipeBase
 from lsst.afw.geom import Angle, degrees
+import lsst.log
 import numpy as np
+import time
 
 
 class TaskRunnerWithArgs(pipeBase.ButlerInitializedTaskRunner):
@@ -97,14 +99,17 @@ class ForcedPhotExternalCatalogTask(pipeBase.CmdLineTask):
     _DefaultName = "ForcedPhotExternalCatalogTask"
 
     def __init__(self, butler=None, **kwargs):
+        lsst.log.debug('ForcedPhotExternalCatalogTask __init__ ,'+time.ctime())
         super(lsst.pipe.base.CmdLineTask, self).__init__(**kwargs)
 
         # We need an example output table from measurement to load.
         example_dataset = 'src'
         self.refSchema = butler.get(example_dataset + "_schema", immediate=True).schema
         self.makeSubtask("measurement", refSchema=self.refSchema)
+        lsst.log.debug('ForcedPhotExternalCatalogTask end of __init__ ,'+time.ctime())
 
     def create_source_catalog_from_external_catalog(self, dataRef, coord_file, dataset='src', debug=False):
+        lsst.log.debug('start create_source_catalog ,'+time.ctime())
         butler = dataRef.getButler()
         schema = butler.get(dataset + "_schema", immediate=True).schema
         mapper = afwTable.SchemaMapper(schema)
@@ -120,13 +125,14 @@ class ForcedPhotExternalCatalogTask(pipeBase.CmdLineTask):
             record.set('coord_dec', Angle(row['Dec']*degrees))
 
         if debug:
-            print(src_cat['coord_ra'], src_cat['coord_dec'])
+            lsst.log.debug(src_cat['coord_ra'], src_cat['coord_dec'])
         return(src_cat)
+        lsst.log.debug('end create_source_catalog ,'+time.ctime())
 
     def run(self, dataRef, coord_file=None, dataset=None, out_root=None):
         """ Perform forced photometry on the dataRef exposure at the locations in coord_file.
         """
-
+        lsst.log.debug('start run ,'+time.ctime())
         self.dataset = dataset
         if self.dataset == "diff":
             self.dataPrefix = "deepDiff_"
@@ -169,6 +175,7 @@ class ForcedPhotExternalCatalogTask(pipeBase.CmdLineTask):
         meta.add('FLUXM0SG', fluxMag0Err)
         measCat.getTable().setMetadata(meta)
         measCat.writeFits(out_file)
+        lsst.log.debug('end run ,'+time.ctime())
 
     def writeOutput(self, dataRef, sources):
         """!Write forced source table
@@ -203,4 +210,5 @@ class ForcedPhotExternalCatalogTask(pipeBase.CmdLineTask):
 
 if __name__ == "__main__":
 
+    lsst.log.debug('Before parseAndRun, '+time.ctime())
     ForcedPhotExternalCatalogTask.parseAndRun()
