@@ -137,7 +137,7 @@ class ForcedPhotExternalCatalogTask(pipeBase.CmdLineTask):
 
         measCat = self.measurement.generateMeasCat(exposure. refCat, expWcs)
 
-                self.measurement.attachTransformedFootprints(measCat, refCat, exposure, expWcs)
+        self.measurement.attachTransformedFootprints(measCat, refCat, exposure, expWcs)
         self.measurement.run(measCat, exposure, refCat, expWcs)
 
         # Get magnitude information so it can be added to catalog metadata
