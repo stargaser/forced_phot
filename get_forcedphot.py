@@ -12,6 +12,7 @@ from astropy.table import Table, Column, vstack, join
 import astropy.units as u
 from astropy.time import Time
 import glob
+import time
 
 def imgserv_json_to_df(json_input):
     with open(json_input) as json_file:
@@ -42,6 +43,7 @@ def parse_phot_table(table_path):
     return(tab)
 
 def main():
+    print('Start of main ,'+time.ctime())
     import argparse
     parser = argparse.ArgumentParser(description="""
             Run forced photometry on specified images and output a time-series table
@@ -80,10 +82,13 @@ def main():
         cfh.write('%s\n'%coord_str)
 
     # Run the forced photometry
+    print('call forced phot ,'+time.ctime())
     exec_str = (('python forcedPhotExternalCatalog.py {} ' +
-            '--coord_file {} --dataset calexp --output {} --out_root {} ').format(
+            '--coord_file {} --dataset calexp --output {} --out_root {} --clobber-versions ' + 
+            '--profile forced_stats.txt ').format(
             input_repo, coords_path, output_repo, os.path.join(dirpath, 'photometry')) + idstr)
     os.system(exec_str)
+    print('returned from forced phot ,'+time.ctime())
 
     # Concatenate the input tables
     tnames = glob.glob(os.path.join(dirpath, 'photometry_*.fits'))
@@ -112,6 +117,7 @@ def main():
 
     # Clean up
     shutil.rmtree(dirpath)
+    print('End of main ,'+time.ctime())
 
 if __name__ == '__main__':
     main()
