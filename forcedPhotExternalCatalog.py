@@ -128,34 +128,6 @@ class ForcedPhotExternalCatalogTask(pipeBase.CmdLineTask):
         return(src_cat)
         print('end create_source_catalog ,'+time.ctime())
 
-<<<<<<< HEAD
-=======
-    def doit(self, repo_str, dataId, refCat):
-        """ Perform forced photometry on dataId from repo_str at positions in refCat
-        """
-        butler = Butler(repo_str)
-        exposure = butler.get('calexp', dataId=dataId)
-        expWcs = exposure.getWcs()
-
-        measCat = self.measurement.generateMeasCat(exposure. refCat, expWcs)
-
-        self.measurement.attachTransformedFootprints(measCat, refCat, exposure, expWcs)
-        self.measurement.run(measCat, exposure, refCat, expWcs)
-
-        # Get magnitude information so it can be added to catalog metadata
-        calib = exposure.getCalib()
-        fluxMag0, fluxMag0Err = calib.getFluxMag0()
-
-        meta = measCat.getTable().getMetadata()
-        for (key, val) in dataId.iteritems():
-            meta.add(key.upper(), val)
-        meta.add('FLUXM0', fluxMag0)
-        meta.add('FLUXM0SG', fluxMag0Err)
-        measCat.getTable().setMetadata(meta)
-        return(measCat)
-
-
->>>>>>> aee97acefec15de7570273281cd0e2eb8c2aa0d6
     def run(self, dataRef, coord_file=None, dataset=None, out_root=None):
         """ Perform forced photometry on the dataRef exposure at the locations in coord_file.
         """
