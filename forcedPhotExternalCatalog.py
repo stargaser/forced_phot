@@ -128,6 +128,8 @@ class ForcedPhotExternalCatalogTask(pipeBase.CmdLineTask):
         return(src_cat)
         print('end create_source_catalog ,'+time.ctime())
 
+<<<<<<< HEAD
+=======
     def doit(self, repo_str, dataId, refCat):
         """ Perform forced photometry on dataId from repo_str at positions in refCat
         """
@@ -153,6 +155,7 @@ class ForcedPhotExternalCatalogTask(pipeBase.CmdLineTask):
         return(measCat)
 
 
+>>>>>>> aee97acefec15de7570273281cd0e2eb8c2aa0d6
     def run(self, dataRef, coord_file=None, dataset=None, out_root=None):
         """ Perform forced photometry on the dataRef exposure at the locations in coord_file.
         """
