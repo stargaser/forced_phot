@@ -8,7 +8,6 @@ if os.path.exists('/home/shupe/work/forcephot/output'):
     out_butler = Butler('/home/shupe/work/forcephot/output')
 elif os.path.exists('/hydra/workarea/forcephot/output'):
     out_butler = Butler('/hydra/workarea/forcephot/output')
-ftask = ForcedPhotExternalCatalogTask(out_butler)
 
 
 def doit(dataId, refCat):
@@ -18,6 +17,7 @@ def doit(dataId, refCat):
     exposure = in_butler.get('calexp', dataId=dataId)
     expWcs = exposure.getWcs()
 
+    ftask = ForcedPhotExternalCatalogTask(out_butler)
     measCat = ftask.measurement.generateMeasCat(exposure, refCat, expWcs)
 
     ftask.measurement.attachTransformedFootprints(measCat, refCat, exposure, expWcs)
