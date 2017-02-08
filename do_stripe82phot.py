@@ -5,8 +5,8 @@ import os
 
 if os.path.exists('/home/shupe/work/forcephot/output'):
     out_butler = Butler('/home/shupe/work/forcephot/output')
-elif os.path.exists('/hydra/workspace/forcephot/output'):
-    out_butler = Butler('/hydra/workspace/forcephot/output')
+elif os.path.exists('/hydra/workarea/forcephot/output'):
+    out_butler = Butler('/hydra/workarea/forcephot/output')
 ftask = ForcedPhotExternalCatalogTask(out_butler)
 
 def doit(dataId, refCat):
