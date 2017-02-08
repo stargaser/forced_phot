@@ -1,8 +1,12 @@
 import functools32
 from forcedPhotExternalCatalog import ForcedPhotExternalCatalogTask
 from lsst.daf.persistence import Butler
+import os
 
-out_butler = Butler('/home/shupe/work/forcephot/output')
+if os.path.exists('/home/shupe/work/forcephot/output'):
+    out_butler = Butler('/home/shupe/work/forcephot/output')
+elif os.path.exists('/hydra/workspace/forcephot/output'):
+    out_butler = Butler('/hydra/workspace/forcephot/output')
 ftask = ForcedPhotExternalCatalogTask(out_butler)
 
 def doit(dataId, refCat):
