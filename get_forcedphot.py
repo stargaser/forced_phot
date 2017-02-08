@@ -23,7 +23,16 @@ def imgserv_json_to_df(json_input):
         for e in json_data['result']['table']['metadata']['elements']]
     return(df)
 
-def parse_phot_table(tab):
+def conv_afwtable_astropy(afwtable):
+    with tempfile.NamedTemporaryFile() as tf:
+        afwtable.writeFits(tf.name)
+        tf.flush()
+        tf.seek(0)
+        atab = Table.read(tf.name, hdu=1)
+    return(atab)
+
+def parse_phot_table(afwTable):
+    tab = conv_afwtable_astropy(afwTable)
     tab['run'] = tab.meta['RUN']
     tab['camcol'] = tab.meta['CAMCOL']
     tab['field'] = tab.meta['FIELD']
