@@ -31,8 +31,11 @@ def conv_afwtable_astropy(afwtable):
         atab = Table.read(tf.name, hdu=1)
     return(atab)
 
-def parse_phot_table(afwTable):
-    tab = conv_afwtable_astropy(afwTable)
+def parse_phot_table(afwTable, convert=True):
+    if convert:
+        tab = conv_afwtable_astropy(afwTable)
+    else:
+        tab = afwTable
     tab['run'] = tab.meta['RUN']
     tab['camcol'] = tab.meta['CAMCOL']
     tab['field'] = tab.meta['FIELD']
@@ -100,7 +103,8 @@ def main():
 
     # Concatenate the input tables
     tnames = glob.glob(os.path.join(dirpath, 'photometry_*.fits'))
-    tbl_list = [parse_phot_table(Table.read(name, hdu=1)) for name in tnames]
+    tbl_list = [parse_phot_table(Table.read(name, hdu=1), convert=False) 
+                for name in tnames]
     alltabs = vstack(tbl_list)
 
     # merge
