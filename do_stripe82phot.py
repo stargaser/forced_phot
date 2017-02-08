@@ -1,4 +1,5 @@
 import os
+import tempfile
 import functools32
 from forcedPhotExternalCatalog import ForcedPhotExternalCatalogTask
 from lsst.daf.persistence import Butler
