@@ -10,7 +10,7 @@ def doit(repo_str, out_repo, dataId, refCat):
     exposure = butler.get('calexp', dataId=dataId)
     expWcs = exposure.getWcs()
 
-    measCat = ftask.measurement.generateMeasCat(exposure. refCat, expWcs)
+    measCat = ftask.measurement.generateMeasCat(exposure, refCat, expWcs)
 
     ftask.measurement.attachTransformedFootprints(measCat, refCat, exposure, expWcs)
     ftask.measurement.run(measCat, exposure, refCat, expWcs)
