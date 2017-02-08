@@ -1,13 +1,25 @@
+import os
 import functools32
 from forcedPhotExternalCatalog import ForcedPhotExternalCatalogTask
 from lsst.daf.persistence import Butler
-import os
+from astropy.table import Table
+
 
 if os.path.exists('/home/shupe/work/forcephot/output'):
     out_butler = Butler('/home/shupe/work/forcephot/output')
 elif os.path.exists('/hydra/workarea/forcephot/output'):
     out_butler = Butler('/hydra/workarea/forcephot/output')
 ftask = ForcedPhotExternalCatalogTask(out_butler)
+
+
+def conv_afwtable_astropy(afwtable):
+    with tempfile.NamedTemporaryFile() as tf:
+        afwtable.writeFits(tf.name)
+        tf.flush()
+        tf.seek(0)
+        atab = Table.read(tf.name, hdu=1)
+    return(atab)
+
 
 def doit(dataId, refCat):
     """ Perform forced photometry on dataId from repo_str at positions in refCat
@@ -31,7 +43,8 @@ def doit(dataId, refCat):
     meta.add('FLUXM0', fluxMag0)
     meta.add('FLUXM0SG', fluxMag0Err)
     measCat.getTable().setMetadata(meta)
-    return(measCat)
+    atab = conv_afwtable_astropy(measCat)
+    return(atab)
 
 @functools32.lru_cache()
 def get_in_butler(repo_str='/datasets/gapon/data/DC_2013/calexps'):
