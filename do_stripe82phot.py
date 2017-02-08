@@ -1,14 +1,14 @@
+import functools32
 from forcedPhotExternalCatalog import ForcedPhotExternalCatalogTask
 from lsst.daf.persistence import Butler
 
-in_butler = Butler('/datasets/gapon/data/DC_2013/calexps')
 out_butler = Butler('/home/shupe/work/forcephot/output')
 ftask = ForcedPhotExternalCatalogTask(out_butler)
 
 def doit(dataId, refCat):
     """ Perform forced photometry on dataId from repo_str at positions in refCat
     """
-
+    in_butler = get_in_butler()
     exposure = in_butler.get('calexp', dataId=dataId)
     expWcs = exposure.getWcs()
 
@@ -29,3 +29,6 @@ def doit(dataId, refCat):
     measCat.getTable().setMetadata(meta)
     return(measCat)
 
+@functools32.lru_cache()
+def get_in_butler(repo_str='/datasets/gapon/data/DC_2013/calexps'):
+    return(Butler(repo_str))
