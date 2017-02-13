@@ -41,8 +41,8 @@ def parse_phot_table(afwTable, convert=True):
     tab['field'] = tab.meta['FIELD']
     tab['filterName'] = tab.meta['FILTER']
     tab['psfMag'] = -2.5*np.log10(tab['base_PsfFlux_flux']/tab.meta['FLUXM0'])
-    tab['psfMagErr'] = -2.5*np.log10(tab['base_PsfFlux_fluxSigma']
-                                     /tab.meta['FLUXM0SG'])
+    tab['psfMagErr'] = -2.5*np.log10(1.- + (tab['base_PsfFlux_fluxSigma']
+                                     /tab.['base_PsfFlux_flux']))
     tab['psfMag'].unit = u.mag
     tab['psfMagErr'].unit = u.mag
     del tab.meta['RUN']
