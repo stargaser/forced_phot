@@ -13,6 +13,7 @@ import astropy.units as u
 from astropy.time import Time
 import glob
 import time
+import lsst.log
 
 def imgserv_json_to_df(json_input):
     with open(json_input) as json_file:
@@ -42,7 +43,7 @@ def parse_phot_table(afwTable, convert=True):
     tab['filterName'] = tab.meta['FILTER']
     tab['psfMag'] = -2.5*np.log10(tab['base_PsfFlux_flux']/tab.meta['FLUXM0'])
     tab['psfMagErr'] = -2.5*np.log10(1.- + (tab['base_PsfFlux_fluxSigma']
-                                     /tab.['base_PsfFlux_flux']))
+                                     /tab['base_PsfFlux_flux']))
     tab['psfMag'].unit = u.mag
     tab['psfMagErr'].unit = u.mag
     del tab.meta['RUN']
@@ -54,7 +55,7 @@ def parse_phot_table(afwTable, convert=True):
     return(tab)
 
 def main():
-    print('Start of main ,'+time.ctime())
+    lsst.log.debug('Start of main ,'+time.ctime())
     import argparse
     parser = argparse.ArgumentParser(description="""
             Run forced photometry on specified images and output a time-series table
@@ -93,13 +94,13 @@ def main():
         cfh.write('%s\n'%coord_str)
 
     # Run the forced photometry
-    print('call forced phot ,'+time.ctime())
+    lsst.log.debug('call forced phot ,'+time.ctime())
     exec_str = (('python forcedPhotExternalCatalog.py {} ' +
-            '--coord_file {} --dataset calexp --output {} --out_root {} --clobber-versions ' + 
-            '--profile forced_stats.txt ').format(
+            '--coord_file {} --dataset calexp --output {} --out_root {} --clobber-versions '
+            ).format(
             input_repo, coords_path, output_repo, os.path.join(dirpath, 'photometry')) + idstr)
     os.system(exec_str)
-    print('returned from forced phot ,'+time.ctime())
+    lsst.log.debug('returned from forced phot ,'+time.ctime())
 
     # Concatenate the input tables
     tnames = glob.glob(os.path.join(dirpath, 'photometry_*.fits'))
@@ -129,7 +130,7 @@ def main():
 
     # Clean up
     shutil.rmtree(dirpath)
-    print('End of main ,'+time.ctime())
+    lsst.log.debug('End of main ,'+time.ctime())
 
 if __name__ == '__main__':
     main()
