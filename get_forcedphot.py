@@ -45,7 +45,7 @@ def main():
 
     # Form string of images to work on
     idstr = (' '.join(['--id run={} camcol={} filter={} field={}'
-        .format(row['run'],row['camcol'],row['filterName'],row['field']) 
+        .format(row['run'],row['camcol'],row['filterName'],row['field'])
         for index, row in df_f.iterrows()]))
 
     # Make a temporary directory to work in
@@ -65,32 +65,6 @@ def main():
             input_repo, coords_path, output_repo, os.path.join(dirpath, 'photometry')) + idstr)
     os.system(exec_str)
     lsst.log.debug('returned from forced phot ,'+time.ctime())
-
-    # Concatenate the input tables
-    tnames = glob.glob(os.path.join(dirpath, 'photometry_*.fits'))
-    tbl_list = [parse_phot_table(Table.read(name, hdu=1), convert=False) 
-                for name in tnames]
-    alltabs = vstack(tbl_list)
-
-    # merge
-    intab = Table.from_pandas(df_f)
-    outtab = join(alltabs, intab, keys=['run','camcol','field','filterName'],
-                  join_type='left')
-    t = Time(outtab['expMidpt'], format='isot', scale='utc')
-    outtab['mjd'] = t.mjd
-    outtab.sort('mjd')
-    outtab['ra'] = outtab['coord_ra'].to('deg')
-    outtab['dec'] = outtab['coord_dec'].to('deg')
-    mycols = ['mjd','psfMag','psfMagErr','ra','dec',
-           'expMidpt','run','field','camcol','filterName',
-           'objectId','base_RaDecCentroid_x',
-           'base_RaDecCentroid_y','base_PsfFlux_flux','base_PsfFlux_fluxSigma']
-    outtab.keep_columns(mycols)
-    newtab = outtab[mycols]
-
-    # Write output
-    #outtab.write(output_table, format='fits', overwrite=True)
-    newtab.write(output_table, format='ipac')
 
     # Clean up
     shutil.rmtree(dirpath)
