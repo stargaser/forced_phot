@@ -4,22 +4,12 @@ from __future__ import print_function, division, absolute_import
 the Stripe82 data
 """
 
-import os
 import functools32
 import tempfile
-import numpy as np
 from lsst.daf.persistence import Butler
-import lsst.afw.table as afwTable
-from lsst.afw.geom import Angle, degrees
 from astropy.table import Table
-import astropy.units as u
-from forcedPhotExternalCatalog import ForcedPhotExternalCatalogTask
-
-# Define this output Butler (needed only for schema)
-if os.path.exists('/home/shupe/work/forcephot/output'):
-    out_butler = Butler('/home/shupe/work/forcephot/output')
-elif os.path.exists('/hydra/workarea/forcephot/output'):
-    out_butler = Butler('/hydra/workarea/forcephot/output')
+from forcedPhotExternalCatalog import (ForcedPhotExternalCatalogTask,
+                        create_source_catalog_from_external_catalog)
 
 
 def make_refcat(ra, dec):
@@ -38,15 +28,10 @@ def make_refcat(ra, dec):
     src_cat : lsst.afw.table.tableLib.SourceCatalog
         Source catalog for the forced photometry task
     """
-    schema = out_butler.get('src_schema', immediate=True).schema
-    mapper = afwTable.SchemaMapper(schema)
-    mapper.addMinimalSchema(schema)
-    newSchema = mapper.getOutputSchema()
-    src_cat = afwTable.SourceCatalog(newSchema)
-    for row in zip(ra,dec):
-        record = src_cat.addNew()
-        record.set('coord_ra', Angle(row[0]*degrees))
-        record.set('coord_dec', Angle(row[1]*degrees))
+    table = Table()
+    table['RA'] = ra
+    table['Dec'] = dec
+    src_cat = create_source_catalog_from_external_catalog(table)
     return(src_cat)
 
 
@@ -97,17 +82,10 @@ def parse_phot_table(afwTable, convert=True):
     tab['camcol'] = tab.meta['CAMCOL']
     tab['field'] = tab.meta['FIELD']
     tab['filterName'] = tab.meta['FILTER']
-    tab['psfMag'] = -2.5*np.log10(tab['base_PsfFlux_flux']/tab.meta['FLUXM0'])
-    tab['psfMagErr'] = -2.5*np.log10(1.- + (tab['base_PsfFlux_fluxSigma']
-                                     /tab['base_PsfFlux_flux']))
-    tab['psfMag'].unit = u.mag
-    tab['psfMagErr'].unit = u.mag
     del tab.meta['RUN']
     del tab.meta['CAMCOL']
     del tab.meta['FIELD']
     del tab.meta['FILTER']
-    del tab.meta['FLUXM0']
-    del tab.meta['FLUXM0SG']
     return(tab)
 
 
@@ -123,7 +101,7 @@ def do_phot(dataId, refCat):
     -----------
     dataId : dict
         Dictionary of key:value pairs specifying data
-    refCat : lsst.afw.table.tableLib.SourceCatalog 
+    refCat : lsst.afw.table.tableLib.SourceCatalog
         Reference catalog containing positions for forced photometry
 
     Returns:
@@ -135,21 +113,15 @@ def do_phot(dataId, refCat):
     exposure = in_butler.get('calexp', dataId=dataId)
     expWcs = exposure.getWcs()
 
-    ftask = ForcedPhotExternalCatalogTask(out_butler)
+    ftask = ForcedPhotExternalCatalogTask()
     measCat = ftask.measurement.generateMeasCat(exposure, refCat, expWcs)
 
     ftask.measurement.attachTransformedFootprints(measCat, refCat, exposure, expWcs)
-    ftask.measurement.run(measCat, exposure, refCat, expWcs)
-
-    # Get magnitude information so it can be added to catalog metadata
-    calib = exposure.getCalib()
-    fluxMag0, fluxMag0Err = calib.getFluxMag0()
+    ftask.measurement.process_one_dataset(measCat, exposure, refCat, expWcs)
 
     meta = measCat.getTable().getMetadata()
     for (key, val) in dataId.iteritems():
         meta.add(key.upper(), val)
-    meta.add('FLUXM0', fluxMag0)
-    meta.add('FLUXM0SG', fluxMag0Err)
     measCat.getTable().setMetadata(meta)
     return(measCat)
 

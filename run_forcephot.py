@@ -11,10 +11,10 @@ from stripe82phot import (do_phot, parse_phot_table,
 
 def do_one(dataId):
     global src_cat
-    try:
-        rval = do_phot(dataId=dataId, refCat=src_cat)
-    except:
-        return
+    #try:
+    rval = do_phot(dataId=dataId, refCat=src_cat)
+    #except:
+    #    return
     return(rval)
 
 
@@ -39,10 +39,8 @@ def main():
     ids = [{'run':row.run, 'field':row.field, 'camcol':row.camcol, 
             'filter':row.filterName.encode()} 
             for index, row in df_f.iterrows()]
-
     global src_cat
     src_cat = make_refcat([ra], [dec])
-
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor:
         results = executor.map(do_one, ids)

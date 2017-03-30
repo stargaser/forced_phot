@@ -95,6 +95,18 @@ class TaskRunnerWithArgs(DataRefListRunner):
                  )
         return result
 
+def create_source_catalog_from_external_catalog(sources, debug=False):
+    src_cat = afwTable.SourceCatalog(afwTable.SourceTable.makeMinimalSchema())
+    for row in sources:
+        record = src_cat.addNew()
+        record.set('coord_ra', Angle(row['RA']*degrees))
+        record.set('coord_dec', Angle(row['Dec']*degrees))
+
+    if debug:
+        lsst.log.debug(src_cat['coord_ra'], src_cat['coord_dec'])
+    return(src_cat)
+    lsst.log.debug('end create_source_catalog ,'+time.ctime())
+
 
 def load_external_catalog_info(coord_file):
     """Load name, ra, dec information from an external csv catalog.
@@ -172,7 +184,7 @@ class ForcedPhotExternalCatalogTask(pipeBase.CmdLineTask):
     RunnerClass = TaskRunnerWithArgs
     _DefaultName = "ForcedPhotExternalCatalogTask"
 
-    def __init__(self, butler=None, **kwargs):
+    def __init__(self, **kwargs):
         lsst.log.debug('ForcedPhotExternalCatalogTask __init__ ,'+time.ctime())
         super(lsst.pipe.base.CmdLineTask, self).__init__(**kwargs)
 
@@ -193,24 +205,11 @@ class ForcedPhotExternalCatalogTask(pipeBase.CmdLineTask):
         self.makeSubtask("measurement", refSchema=self.refSchema)
         lsst.log.debug('ForcedPhotExternalCatalogTask end of __init__ ,'+time.ctime())
 
-    def create_source_catalog_from_external_catalog(self, dataRef, sources, debug=False):
-        src_cat = afwTable.SourceCatalog(afwTable.SourceTable.makeMinimalSchema())
-        for row in sources:
-            record = src_cat.addNew()
-            record.set('coord_ra', Angle(row['RA']*degrees))
-            record.set('coord_dec', Angle(row['Dec']*degrees))
-
-        if debug:
-            lsst.log.debug(src_cat['coord_ra'], src_cat['coord_dec'])
-        return(src_cat)
-        lsst.log.debug('end create_source_catalog ,'+time.ctime())
-
-
-    def __process_one_dataRef(self, dataRef, sources):
+    def process_one_dataRef(self, dataRef, sources):
         butler = dataRef.getButler()
         exposure = butler.get(self.dataset, dataId=dataRef.dataId)
         expWcs = exposure.getWcs()
-        refCat = self.create_source_catalog_from_external_catalog(dataRef, sources)
+        refCat = create_source_catalog_from_external_catalog(sources)
         measCat = self.measurement.generateMeasCat(exposure, refCat, expWcs)
         self.log.info("Performing forced measurement on science image %s" % (dataRef.dataId))
 
@@ -314,7 +313,7 @@ class ForcedPhotExternalCatalogTask(pipeBase.CmdLineTask):
         # ctrl_pool package for the framework, or pipe_drivers for examples.
         # (Unfortunately, neither of them are well documented, and we expect
         # them to be replaced entirely over the next several months)
-        catalogs = [self.__process_one_dataRef(dataRef, sources).measCat
+        catalogs = [self.process_one_dataRef(dataRef, sources).measCat
                     for dataRef in dataRefs]
 
         # Next, we'll concatenate all those catalogs into a single master
